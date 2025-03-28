@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const sequelize = require("./config/database");
 const userRoutes = require("./routes/user.routes");
+const artworkRoutes = require("./routes/artwork.routes");
 
 const path = require("path");
 
@@ -17,6 +18,9 @@ app.use(cors());
 
 // Routes
 app.use("/api/users", userRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api/artworks", artworkRoutes);
+
 
 // Database Sync
 sequelize.sync()
