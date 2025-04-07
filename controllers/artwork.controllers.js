@@ -6,24 +6,42 @@ const fs = require("fs");
 exports.createArtwork = async (req, res) => {
   try {
     let imageUrl = "";
-    if (req.file) {
-      const filename = `${Date.now()}_${req.file.originalname}`;
-      const outputPath = path.join(__dirname, "../uploads/", filename);
+    let invoiceUrl = "";
 
-      await sharp(req.file.path)
+    if (req.files?.picture?.[0]) {
+      const pictureFile = req.files.picture[0];
+      const pictureName = `${Date.now()}_${pictureFile.originalname}`;
+      const picturePath = path.join(__dirname, "../uploads/", pictureName);
+
+      await sharp(pictureFile.path)
         .resize(800, 800, { fit: "inside" })
-        .toFile(outputPath);
+        .toFile(picturePath);
 
-      fs.unlinkSync(req.file.path); // Remove original file
-      imageUrl = `/uploads/${filename}`;
+      fs.unlinkSync(pictureFile.path);
+      imageUrl = `/uploads/${pictureName}`;
     }
 
-    const artwork = await Artwork.create({ ...req.body, pictureUrl: imageUrl });
+    if (req.files?.invoice?.[0]) {
+      const invoiceFile = req.files.invoice[0];
+      const invoiceName = `${Date.now()}_${invoiceFile.originalname}`;
+      const invoicePath = path.join(__dirname, "../uploads/", invoiceName);
+
+      fs.renameSync(invoiceFile.path, invoicePath);
+      invoiceUrl = `/uploads/${invoiceName}`;
+    }
+
+    const artwork = await Artwork.create({
+      ...req.body,
+      pictureUrl: imageUrl,
+      invoiceUrl: invoiceUrl
+    });
+
     res.status(201).json(artwork);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 exports.getArtworks = async (req, res) => {
   try {
