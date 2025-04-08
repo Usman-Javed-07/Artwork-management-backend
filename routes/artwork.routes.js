@@ -7,7 +7,8 @@ router.post(
     "/",
     upload.fields([
       { name: "picture", maxCount: 1 },
-      { name: "invoice", maxCount: 1 }
+      { name: "invoice", maxCount: 1 },
+      { name: "additionalPictures", maxCount: 10 },
     ]),
     artworkController.createArtwork
   );

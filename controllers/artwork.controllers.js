@@ -7,7 +7,9 @@ exports.createArtwork = async (req, res) => {
   try {
     let imageUrl = "";
     let invoiceUrl = "";
+    let additionalPictures = [];
 
+    // Handle main picture
     if (req.files?.picture?.[0]) {
       const pictureFile = req.files.picture[0];
       const pictureName = `${Date.now()}_${pictureFile.originalname}`;
@@ -19,8 +21,11 @@ exports.createArtwork = async (req, res) => {
 
       fs.unlinkSync(pictureFile.path);
       imageUrl = `/uploads/${pictureName}`;
+    } else {
+      return res.status(400).json({ error: "Picture is required." });
     }
 
+    // Handle invoice
     if (req.files?.invoice?.[0]) {
       const invoiceFile = req.files.invoice[0];
       const invoiceName = `${Date.now()}_${invoiceFile.originalname}`;
@@ -30,17 +35,35 @@ exports.createArtwork = async (req, res) => {
       invoiceUrl = `/uploads/${invoiceName}`;
     }
 
+    // Handle additional pictures
+    if (req.files?.additionalPictures?.length) {
+      for (const file of req.files.additionalPictures) {
+        const additionalName = `${Date.now()}_${file.originalname}`;
+        const additionalPath = path.join(__dirname, "../uploads/", additionalName);
+
+        await sharp(file.path)
+          .resize(800, 800, { fit: "inside" })
+          .toFile(additionalPath);
+
+        fs.unlinkSync(file.path);
+        additionalPictures.push(`/uploads/${additionalName}`);
+      }
+    }
+
     const artwork = await Artwork.create({
       ...req.body,
       pictureUrl: imageUrl,
-      invoiceUrl: invoiceUrl
+      invoiceUrl: invoiceUrl,
+      additionalPictures: additionalPictures,
     });
 
     res.status(201).json(artwork);
   } catch (error) {
+    console.error("Error while creating artwork:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 exports.getArtworks = async (req, res) => {
